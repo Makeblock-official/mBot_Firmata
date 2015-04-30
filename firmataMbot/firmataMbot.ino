@@ -46,6 +46,8 @@
 // mbot hardware specified command
 #define RGBLED_SET            0x11 // set rgbled color
 #define SONAR_GET            0x12 // read sonar distance
+#define LIGHTSENSOR_GET      0x13
+#define BUZZER_TONE          0x14
 
 /*==============================================================================
  * GLOBAL VARIABLES
@@ -645,8 +647,9 @@ void sysexCallback(byte command, byte argc, byte *argv)
       break;
     case SONAR_GET:
       {
-        uint8_t pin = A1;
+        uint8_t pin;
         uint32_t duration;
+        pin = argv[0];
         digitalWrite(pin,LOW);
         delayMicroseconds(2);
         digitalWrite(pin,HIGH);
@@ -661,6 +664,21 @@ void sysexCallback(byte command, byte argc, byte *argv)
         Firmata.write((duration>>8)&0xff);
         Firmata.write(duration&0xff);
         Firmata.write(END_SYSEX);
+      }
+      break;
+    case LIGHTSENSOR_GET:
+      {
+        int analog = analogRead(A6);
+        Firmata.write(START_SYSEX);
+        Firmata.write(LIGHTSENSOR_GET);
+        Firmata.write((analog<<8)&0xff);
+        Firmata.write((analog)&0xff);
+        Firmata.write(END_SYSEX);
+      }
+      break;
+    case BUZZER_TONE:
+      {
+        tone(8, (int)argv[0]*10, (int)argv[1]*10);
       }
       break;
   }
@@ -697,7 +715,6 @@ void disableI2CPins() {
 void systemResetCallback()
 {
   isResetting = true;
-
   // initialize a defalt state
   // TODO: option to load config from EEPROM instead of default
 
@@ -738,6 +755,16 @@ void systemResetCallback()
   for (byte i=0; i < TOTAL_PORTS; i++) {
     outputPort(i, readPort(i, portConfigInputs[i]), true);
   }
+  */
+  /* // funny tone when programme start
+  tone(8,262,250);delay(300);
+  tone(8,196,125);delay(300);
+  tone(8,196,125);delay(300);
+  tone(8,220,250);delay(300);
+  tone(8,196,250);delay(300);
+  tone(8,0,250);delay(300);
+  tone(8,247,250);delay(300);
+  tone(8,262,250);delay(300);
   */
   isResetting = false;
 }
