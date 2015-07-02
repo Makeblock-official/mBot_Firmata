@@ -30,6 +30,9 @@
 #include <Servo.h>
 #include <Wire.h>
 #include <Firmata.h>
+// makeblock defined libs
+#include "MeBuzzer.h"
+#include "MeIR.h"
 
 #define I2C_WRITE                   B00000000
 #define I2C_READ                    B00001000
@@ -48,6 +51,7 @@
 #define SONAR_GET            0x12 // read sonar distance
 #define LIGHTSENSOR_GET      0x13
 #define BUZZER_TONE          0x14
+#define INFRA_READ           0x15
 
 /*==============================================================================
  * GLOBAL VARIABLES
@@ -75,6 +79,10 @@ struct i2c_device_info {
   int reg;
   byte bytes;
 };
+
+/* Makeblock mbot peripherals */
+MeBuzzer buzz(8);
+MeIR ir;
 
 /* for i2c read continuous more */
 i2c_device_info query[MAX_QUERIES];
@@ -678,7 +686,7 @@ void sysexCallback(byte command, byte argc, byte *argv)
       break;
     case BUZZER_TONE:
       {
-        tone(8, (int)argv[0]*10, (int)argv[1]*10);
+        buzz.tone((int)argv[0]*10, (int)argv[1]*10);
       }
       break;
   }
@@ -756,16 +764,17 @@ void systemResetCallback()
     outputPort(i, readPort(i, portConfigInputs[i]), true);
   }
   */
-  /* // funny tone when programme start
-  tone(8,262,250);delay(300);
-  tone(8,196,125);delay(300);
-  tone(8,196,125);delay(300);
-  tone(8,220,250);delay(300);
-  tone(8,196,250);delay(300);
-  tone(8,0,250);delay(300);
-  tone(8,247,250);delay(300);
-  tone(8,262,250);delay(300);
-  */
+  ///* 
+  // funny tone when programme start
+  buzz.tone(262,250);delay(300);
+  buzz.tone(196,125);delay(300);
+  buzz.tone(196,125);delay(300);
+  buzz.tone(220,250);delay(300);
+  buzz.tone(196,250);delay(300);
+  buzz.tone(0,250);delay(300);
+  buzz.tone(247,250);delay(300);
+  buzz.tone(262,250);delay(300);
+  //*/
   isResetting = false;
 }
 
@@ -782,6 +791,8 @@ void setup()
   Firmata.attach(SYSTEM_RESET, systemResetCallback);
 
   Firmata.begin(57600);
+  
+  ir.begin();
   systemResetCallback();  // reset to default config
 }
 
@@ -821,6 +832,14 @@ void loop()
         readAndReportData(query[i].addr, query[i].reg, query[i].bytes);
       }
     }
+  }
+  // ir read
+  if(ir.decode()){
+    unsigned char irRead = ((ir.value>>8)>>8)&0xff;
+    Firmata.write(START_SYSEX);
+    Firmata.write(INFRA_READ);
+    Firmata.write(irRead);
+    Firmata.write(END_SYSEX);  
   }
 }
 

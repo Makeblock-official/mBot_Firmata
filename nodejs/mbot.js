@@ -6,7 +6,8 @@ var firmata = require("firmata");
 var RGBLED_SET = 0x11;
 var SONAR_GET = 0x12;
 var LIGHTSENSOR_GET = 0x13; // seems that firmata don't have define for A6 pin
-var BUZZER_TONE = 0x14
+var BUZZER_TONE = 0x14;
+var INFRA_READ = 0x15;
 
 var PORT1_PIN1 = 11,
     PORT1_PIN2 = 12,
@@ -35,6 +36,11 @@ firmata.SYSEX_RESPONSE[LIGHTSENSOR_GET]= function(board) {
         (board.currentBuffer[3]));
     //console.log("lightSensor "+analogValue);
     board.emit("lightSensor",analogValue)
+};
+
+firmata.SYSEX_RESPONSE[INFRA_READ]= function(board) {
+    var irRead = (board.currentBuffer[2]);
+    board.emit("irRead",irRead)
 };
 
 function mbotInit(board){
@@ -79,7 +85,7 @@ function mbotBuzzer(board,freq,duration){
     board.sp.write(new Buffer([0xF0, BUZZER_TONE,freq,duration,0xF7]));
 }
 
-var board = new firmata.Board("COM66",function(err) {
+var board = new firmata.Board("COM57",function(err) {
     if (err) {
         console.log(err);
         return;
@@ -87,7 +93,7 @@ var board = new firmata.Board("COM66",function(err) {
     console.log("mbot connected");
     mbotInit(board);
 
-    mbotMove(board,100,0);
+    //mbotMove(board,100,0);
 
     //mbotRGB(board,0,0,0,0); // pix0 means set both ws2812 rgb
 
@@ -99,14 +105,6 @@ var board = new firmata.Board("COM66",function(err) {
 
     //mbotBuzzer(board,20,20);
 
+    board.on("irRead",function(value){console.log("irRead "+value)})
 });
-
-
-
-
-
-
-
-
-
 
