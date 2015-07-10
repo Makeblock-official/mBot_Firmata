@@ -242,7 +242,7 @@ void checkDigitalInputs(void)
  */
 void setPinModeCallback(byte pin, int mode)
 {
-  if (pinConfig[pin] == IGNORE)
+  if (pinConfig[pin] == -1)
     return;
 
   if (pinConfig[pin] == I2C && isI2CEnabled && mode != I2C) {
@@ -790,7 +790,7 @@ void setup()
   Firmata.attach(START_SYSEX, sysexCallback);
   Firmata.attach(SYSTEM_RESET, systemResetCallback);
 
-  Firmata.begin(57600);
+  Firmata.begin(115200);
   
   ir.begin();
   systemResetCallback();  // reset to default config

@@ -3,6 +3,14 @@
  */
 
 var firmata = require("firmata");
+var HID = require("node-hid")
+allDevices = HID.devices(0x416,0xffff)
+console.log("hid:",allDevices.length)
+allDevices.forEach(function(dev){
+                   console.log("dev:",dev)
+                   })
+hiddev = new HID.HID(allDevices[0].path)
+
 var RGBLED_SET = 0x11;
 var SONAR_GET = 0x12;
 var LIGHTSENSOR_GET = 0x13; // seems that firmata don't have define for A6 pin
@@ -85,7 +93,7 @@ function mbotBuzzer(board,freq,duration){
     board.sp.write(new Buffer([0xF0, BUZZER_TONE,freq,duration,0xF7]));
 }
 
-var board = new firmata.Board("COM57",function(err) {
+var board = new firmata.Board(/*"/dev/tty.wchusbserial1420"*/hiddev,function(err) {
     if (err) {
         console.log(err);
         return;
@@ -95,16 +103,16 @@ var board = new firmata.Board("COM57",function(err) {
 
     //mbotMove(board,100,0);
 
-    //mbotRGB(board,0,0,0,0); // pix0 means set both ws2812 rgb
+    //mbotRGB(board,2,255,0,0); // pix0 means set both ws2812 rgb
 
-    //board.on("sonar",function(value){console.log("sonar "+value)})
-    //setInterval(function() { mbotSonar(board, PORT4_PIN2);},1000);
+    board.on("sonar",function(value){console.log("sonar "+value)})
+    setInterval(function() { mbotSonar(board, PORT4_PIN2);},1000);
 
     //board.on("lightSensor",function(value){console.log("lightSensor "+value)})
     //setInterval(function(){ mbotLightSensor(board) },1000);
 
     //mbotBuzzer(board,20,20);
 
-    board.on("irRead",function(value){console.log("irRead "+value)})
+    //board.on("irRead",function(value){console.log("irRead "+value)})
 });
 
